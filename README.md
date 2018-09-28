@@ -3,4 +3,4 @@
 - [test package demo](testpackage)
 
 - [pd](pd)
-    - listed the pandas command
+    - pandas common command to recall
