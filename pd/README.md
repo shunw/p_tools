@@ -20,10 +20,16 @@
     - ex (select specific row and col): 
         - pos = y == 0;
         - df.loc[pos, df.columns[0]] 
+    - ex2: 
+        - pos = y == 0;
+        - plt.scatter(X.loc[pos, X.columns[0]], X.loc[pos, X.columns[1]], marker = '^')
 - __np__ compare np selection
     - ex (select one col): 
         - test = np.array([[1, 2], [3, 4], [5, 6]])
         - test[:,0]
+    - ex2: 
+        - pos = y == 0;
+        - plt.scatter(X[pos, 0], X[pos, 1], marker = '^')
 
 
 
