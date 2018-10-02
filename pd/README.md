@@ -5,6 +5,10 @@
 - `__init__.py` : inherit package name 
 
 ## Note: 
+### Differentiate dataframe and matrix:
+- __np__: if type(X) is np.ndarray
+- __pd__: if type(X) is pd.DataFrame
+
 ### Creation:
 
 - __np__ create array: 
