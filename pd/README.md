@@ -35,3 +35,7 @@
 
 ### Plot:
 - 2D scatter plot with different legend
+    - ex:
+        - ax1 = plt.scatter(x0, x1, marker = '^')
+        - ax2 = plt.scatter(x0, x1, marker = '^')
+        - plt.legend((ax1, ax2), ('admitted', 'not admitted'), loc = 'lower left')
