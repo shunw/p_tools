@@ -39,7 +39,12 @@
         - ax1 = plt.scatter(x0, x1, marker = '^')
         - ax2 = plt.scatter(x0, x1, marker = '^')
         - plt.legend((ax1, ax2), ('admitted', 'not admitted'), loc = 'lower left')
-
+- plot with legend
+    - ex: 
+        - err_trn, = plt.plot(x1, y1, label = 'Train')
+        - err_val,  = plt.plot(x1, y2, label = 'Cross Validation')
+        - plt.legend(handles = [err_trn, err_val])
+        
 - plot 2 separate plot
     - ex: 
         - plt.figure(1)
@@ -47,7 +52,7 @@
         - plt.scatter ...
         - plt.subplot(212)
         - plt.hist ...
-        
+
         - plt.figure(2)
         - plt.plot ...
         - plt.show()
