@@ -56,4 +56,17 @@
 
         - plt.figure(2)
         - plt.plot ...
+
         - plt.show()
+
+- plot return plot by function
+    - ex: 
+        - in function:
+            - fig = plt.figure()
+            - _ = plt.scatter(X[pos, 0], X[pos, 1])
+            - _ = plt.scatter(X[neg, 0], X[neg, 1])
+            - return fig
+        - call function: 
+            - f = function(...)
+            - plt.plot(X, y)
+            - plt.show()    
