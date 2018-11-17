@@ -28,8 +28,9 @@
         - test = np.array([[1, 2], [3, 4], [5, 6]])
         - test[:,0]
     - ex2: 
-        - pos = y == 0;
+        - pos = y == 0; 
         - plt.scatter(X[pos, 0], X[pos, 1], marker = '^')
+        - note: the pos here should be 1D data. If it's 2D data, need to flatten it. 
 
 
 
