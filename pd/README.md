@@ -70,3 +70,15 @@
             - f = function(...)
             - plt.plot(X, y)
             - plt.show()    
+
+- color map
+    - ex1: 
+        - cmap = plt.get_cmap('gist_rainbow')
+        - colors = [cmap(i) for i in np.linspace(0, 1, number)]
+        - for i, c in enumerate(colors):
+        - plt.scatter(X[idx == i, 0], X[idx == i, 1], c = 'white', edgecolors = c, s = 15)
+    
+    - ex2: 
+        - cm = plt.get_cmap('gist_rainbow')
+        - colors = [cm(1. * i / K) for i in range(K)]
+        - colors = np.array(colors)
