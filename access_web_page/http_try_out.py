@@ -6,6 +6,8 @@
 import socket
 import urllib.request, urllib.parse, urllib.error
 import re
+from bs4 import BeautifulSoup
+import ssl
 
 def socket_test():
     mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -70,9 +72,40 @@ class urllib_test(object):
                         
                         print (l.decode().strip())
     
+    def try_soup(self):
+        # with soup to get the link information inside one web page. 
+        
+        # url = 'https://mirrors.163.com/.help'
+        url = 'https://www.amazon.cn/'
+        html = urllib.request.urlopen(url).read()
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        tags = soup('a')
+        # print (tags)
+        for tag in tags: 
+            # print (tag)
+            print (tag.get('href', None))
+    
+def try_soup():
+    
+    # without this, https won't work
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    # url = 'http://www.dr-chuck.com/page1.htm'
+    url = 'http://www.dr-chuck.com'
+    html = urllib.request.urlopen(url, context = ctx).read()
+    soup = BeautifulSoup(html, 'html.parser')
+
+    tags = soup('a')
+    for tag in tags:
+        print (tag.get('href', None))
 
 
 if __name__ == '__main__':
-    a = urllib_test()
-    a.find_web_link()
+    # a = urllib_test()
+    # a.try_soup()
     # socket_test()
+
+    try_soup()
