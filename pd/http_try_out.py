@@ -5,6 +5,7 @@
 
 import socket
 import urllib.request, urllib.parse, urllib.error
+import re
 
 def socket_test():
     mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,11 +60,19 @@ class urllib_test(object):
 
         # read through the web page. 
         for line in fhand:
-            print (line.decode().strip())
+            info = line.decode().strip()
+            y = re.findall('\"(.+)\"', info)
+            if y:
+                for i in y:
+                    # print (i)
+                    f = urllib.request.urlopen(i)
+                    for l in f:
+                        
+                        print (l.decode().strip())
     
 
 
 if __name__ == '__main__':
     a = urllib_test()
-    a.read_web_page()
+    a.find_web_link()
     # socket_test()
