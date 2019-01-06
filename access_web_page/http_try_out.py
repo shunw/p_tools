@@ -8,6 +8,8 @@ import urllib.request, urllib.parse, urllib.error
 import re
 from bs4 import BeautifulSoup
 import ssl
+import xml.etree.ElementTree as ET
+import json
 
 def socket_test():
     mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -102,10 +104,123 @@ def try_soup():
     for tag in tags:
         print (tag.get('href', None))
 
+def try_parse_xml():
+    data = '''
+    <person>
+        <name>Chuck</name>
+        <phone type="intl">
+            +1 734 303 4456
+        </phone>
+        <email hide="yes"/>
+    </person>
+    '''
+    
+    tree = ET.fromstring(data)
+    # print (tree)
+    print ('Name:', tree.find('name').text)
+    print ('Attr:', tree.find('email').get('hide'))
+    print ('phone:', tree.find('phone').get("type"))
+    print ('phone:', tree.find('phone').text)
+
+def try_parse_xml_2():
+    input = '''
+    <stuff>
+        <users>
+            <user x="2">
+                <id>001</id>
+                <name>Chuck</name>
+            </user>
+            <user x="7">
+                <id>009</id>
+                <name>Brent</name>
+            </user>
+        </users>
+    </stuff>    
+    '''
+
+    stuff = ET.fromstring(input)
+    lst = stuff.findall('users/user')
+    print('User count:', len(lst))
+
+    for item in lst:
+        print ('Name', item.find('name').text)
+        print ('Id', item.find('id').text)
+        print ('Attribute', item.get("x"))
+
+def try_json():
+    data = '''{
+        "name":"Chuck",
+        "phone":{
+            "type":"intl",
+            "number":"+1 724 303 4456"
+        },
+        "email":{
+            "hide":"yes"
+        }
+    }
+    '''
+
+    info = json.loads(data)
+    print ('Name:', info["name"])
+    print ('Hide:', info["email"]["hide"])
+    print ('phone type', info['phone'])
+    print ('phone type', info['phone']['type'])
+
+def try_json_2():
+    input_info = '''[
+        {"id": "001", 
+        "x": "2",
+        "name": "Chuck"
+        },
+        {"id": "009", 
+        "x": "7",
+        "name": "Chuck"
+        }
+    ]'''
+
+    info = json.loads(input_info)
+    print ('User count:', len(info))
+    for item in info: 
+        print ('Name', item['name'])
+        print ('Id', item['id'])
+        print ('Attribute', item['x'])
+
+def try_web_service():
+    serviceurl = 'http://maps.googleapi.com/maps/api/geocode/json?'
+
+    while True: 
+        address = input('Enter location: ')
+        if len(address) < 1: break
+        
+        url = serviceurl + urllib.parse.urlencode({'address': address})
+        
+        print ('Retrieving', url)
+        uh = urllib.request.urlopen(url)
+        data = uh.read().decode()
+        print ('Retrieved', len(data), 'characters')
+
+        try: 
+            js = json.loads(data)
+        except: 
+            js = None
+        if not js or 'status' not in js or js['status'] != 'OK':
+            print ('==== Failure To Retrieve ====')
+            print (data)
+            continue
+        
+        print (json.dumps(js, indent=4))
+
+        lat = js["results"][0]["geometry"]["location"]["lat"]
+        lng = js["results"][0]["geometry"]["location"]["lng"]
+
+        print ('lat', lat, 'lng', lng)
+        location = js['results']
+        print (location)
+
 
 if __name__ == '__main__':
     # a = urllib_test()
     # a.try_soup()
     # socket_test()
 
-    try_soup()
+    try_web_service()
