@@ -39,7 +39,7 @@ class CompareTwoSamples_Mean():
             self.scale = (self.var_1/ self.n_1 + self.var_2/ self.n_2) ** .5
             self.loc = (self.mean_1 - self.mean_2)
             self.p_value = self.loc/ self.scale
-            self.p = st.norm.pdf(self.p_value)
+            self.p = st.norm.cdf(self.p_value)
             return self.p_value, self.p, self.df, self.loc, self.scale
         
         else:
@@ -64,7 +64,7 @@ class CompareTwoSamples_Mean():
                 print ('the situation is not listed.')
             self.loc = (self.mean_1 - self.mean_2)
             self.p_value = self.loc / self.scale
-            self.p = st.t.pdf(self.p_value, self.df)
+            self.p = st.t.cdf(self.p_value, self.df)
 
             return self.p_value, self.p, self.df, self.loc, self.scale
 
