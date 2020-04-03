@@ -39,6 +39,6 @@ y = iris.target
 tree_clf = DecisionTreeClassifier(max_depth = 2)
 tree_clf.fit(X, y)
 
-# export_graphviz(tree_clf, out_file = image_path('iris_tree.dot'), feature_names = iris.feature_names[2:], class_names = iris.target_names, rounded = True, filled = True)
+export_graphviz(tree_clf, out_file = image_path('iris_tree.dot'), feature_names = iris.feature_names[2:], class_names = iris.target_names, rounded = True, filled = True)
 
 export_graphviz(tree_clf)
