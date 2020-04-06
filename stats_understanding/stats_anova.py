@@ -1,6 +1,10 @@
 import pandas as pd
 from scipy import stats
 import numpy as np
+from itertools import combinations
+
+def combine(arr, s): 
+    return list(combinations(arr, s))
 
 class Anova_Bonferroni(): 
     def __init__(self, all_data, all_label): 
@@ -54,24 +58,24 @@ class Anova_Bonferroni():
         comp_2 = []
         judge = []
 
-        pairwise_n = 6
+        set_num = 2
+        ind_array = list(range(self.anov_df.shape[0]))
+        all_combin_ls = combine(ind_array, set_num)
+
+        pairwise_n = len(all_combin_ls)
         t_val = stats.t.ppf(1 - alpha/ pairwise_n/ 2, self.dfw) 
         
-        for i, d in enumerate(self.anov_df['n']): 
-            
-        # for i, d in enumerate(total_data_ls): 
-            if i == self.grp_num - 1: break 
-            for j in range(i + 1, self.grp_num): 
-                se = (self.MSw / d + self.MSw/ self.anov_df['n'][j]) ** .5
-                mean_diff = self.anov_df['mean'][i] - self.anov_df['mean'][j]
-                lower = mean_diff - t_val * se
-                upper = mean_diff + t_val * se
-                pairwise_lower.append(lower)
-                pairwise_upper.append(upper)
-                comp_1.append(self.anov_df['label'][i])
-                comp_2.append(self.anov_df['label'][j])
-                if lower * upper > 0: judge.append(True)
-                else: judge.append(False)
+        for i, j in all_combin_ls: 
+            se = (self.MSw / self.anov_df['n'][i] + self.MSw/ self.anov_df['n'][j]) ** .5
+            mean_diff = self.anov_df['mean'][i] - self.anov_df['mean'][j]
+            lower = mean_diff - t_val * se
+            upper = mean_diff + t_val * se
+            pairwise_lower.append(lower)
+            pairwise_upper.append(upper)
+            comp_1.append(self.anov_df['label'][i])
+            comp_2.append(self.anov_df['label'][j])
+            if lower * upper > 0: judge.append(True)
+            else: judge.append(False)
         pairwise_df = pd.DataFrame({'comp_1': comp_1, 'comp_2': comp_2, 'lower': pairwise_lower, 'upper': pairwise_upper, 'j_significant': judge})
         return pairwise_df
         
@@ -89,6 +93,6 @@ if __name__ == '__main__':
     anb = Anova_Bonferroni(df[wtl], df[dt])
     anb._anov_basic()
     anb.anov_cal()
-    anb.pairwise_cmp(.05)
+    print (anb.pairwise_cmp(.05))
 
 
