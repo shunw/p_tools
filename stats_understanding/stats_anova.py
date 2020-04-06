@@ -95,4 +95,10 @@ if __name__ == '__main__':
     anb.anov_cal()
     print (anb.pairwise_cmp(.05))
 
+    # Notice, for some complex one, the Fstat and Pr value may different from the f one-way in the Scipy. 
+    # the F stat is similar 
+    # the Pr is quite different, not sure if this is cause by the df, but both are close to 0
+
+
+
 

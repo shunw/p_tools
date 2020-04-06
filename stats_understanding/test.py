@@ -21,7 +21,27 @@ test_df['prod&phase'] = test_df['phase'] + test_df['product']
 # print (temp.drop_duplicates())
 anova_comp = Anova_Bonferroni(test_df['CC_V_K'], test_df['prod&phase'])
 anova_comp._anov_basic()
-print (anova_comp.anov_cal())
+anova_comp_cal = anova_comp.anov_cal()
+print (anova_comp_cal)
 comp = anova_comp.pairwise_cmp(.05)
-print (comp)
+# print (comp)
 # print (comp.loc[comp['j_significant'] == True].shape)
+
+# verify with the f one-way check
+from scipy import stats
+diff_phase = test_df['prod&phase'].unique()
+data_ls = []
+for p in diff_phase: 
+    data = test_df.loc[test_df['prod&phase'] == p, 'CC_V_K']
+    data_ls.append(data)
+a, b, c, d = data_ls
+stat, pvalue = stats.f_oneway(a, b, c, d)
+print (stat, pvalue)
+
+from statsmodels.stats.multicomp import pairwise_tukeyhsd, MultiComparison
+
+mc = MultiComparison(test_df['CC_V_K'], test_df['prod&phase'])
+result = mc.tukeyhsd()
+# print (result)
+
+print (stats.kruskal(a, b, c, d))
