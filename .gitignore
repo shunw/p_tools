@@ -129,3 +129,6 @@ dmypy.json
 
 *.zip
 stopwords/*
+
+# specific file
+df_data.pkl

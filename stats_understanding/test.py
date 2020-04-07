@@ -44,4 +44,4 @@ mc = MultiComparison(test_df['CC_V_K'], test_df['prod&phase'])
 result = mc.tukeyhsd()
 # print (result)
 
-print (stats.kruskal(a, b, c, d))
+print (stats.kruskal(*data_ls))
