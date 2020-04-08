@@ -15,6 +15,9 @@ import numpy as np
 import datetime
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor  
+import warnings
+
+warnings.filterwarnings("ignore")
 
 '''
 purpose: try to predict the work load
@@ -186,7 +189,49 @@ class Data_further_clear():
         self.df['p_type'] = self.df['t_type'].apply(lambda x: x.split('_')[1])
         return self.df
 
+class Work_load_Data():
+    # this is to return the data
+    def __init__(self): 
+        pass
+        df = joblib.load('df_data.pkl')
+        clear = Data_further_clear(df)
+        clear.add_proj_phase()
+        self.df_prepared = clear.add_type()
+        self.df_prepared = self.df_prepared[self.df_prepared['phase'].isin(['DE', 'MT', 'MP'])]
+        
+        
+    def no_time_data(self): 
+        df_prepared_no_time = self.df_prepared.groupby(['phase', 'p_name', 't_type', 'c_type', 'p_type']).sum().reset_index()
+        df_prepared_no_time.drop(['month'], axis = 1, inplace = True)
+        
+        df_month_qty = self.df_prepared.groupby(['p_name', 'phase']).size().reset_index()
+        df_month_qty.rename(columns = {0:'month_qty'}, inplace = True)
+        
+        df_prepared_no_time = df_prepared_no_time.merge(df_month_qty, left_on =['p_name', 'phase'], right_on = ['p_name', 'phase'])
+
+        df_prepared_no_time['tesths_per_month'] = df_prepared_no_time['test_hs']/ df_prepared_no_time['month_qty']
+        
+        return df_prepared_no_time
+
+    def with_time_data(self): 
+        df_prepared_w_time = self.df_prepared.groupby(['year', 'month']).sum().reset_index()
+
+        df_prepared_w_time['date'] = df_prepared_w_time[['year','month']].apply(lambda x: '{year}-{month}-{day}'.format(year = x['year'], month = x['month'], day = 1), axis=1)
+        df_prepared_w_time['date'] = df_prepared_w_time['date'].apply(pd.to_datetime, format='%Y-%m-%d')
+
+        return df_prepared_w_time
+    
+    def w_begin_time(self): 
+        # return the dataframe, with begin month start that project
+        df_w_begin_time = self.df_prepared[['p_name', 'phase', 'date', 'c_type', 'p_type', 't_type']]
+        remain_col = ['p_name', 'phase', 'c_type', 'p_type', 't_type']
+        df_w_begin_time.sort_values(['p_name', 'date'], inplace = True)
+        df_w_begin_time.drop_duplicates(remain_col, keep='first', inplace = True)
+        
+        return df_w_begin_time
+
 if __name__ == '__main__':
+    pass
     # # =========== CSV data Import =============
     # name_ls = list(range(2013, 2021))
     # name_ls = ['.'.join([str(n), 'csv']) for n in name_ls]
@@ -198,26 +243,27 @@ if __name__ == '__main__':
     # joblib.dump(df, 'df_data.pkl')
 
 
-    # =========== DATA further Clear =============
-    # only check the three phase data
-    df = joblib.load('df_data.pkl')
-    clear = Data_further_clear(df)
-    clear.add_proj_phase()
-    df_prepared = clear.add_type()
-    df_prepared = df_prepared[df_prepared['phase'].isin(['DE', 'MT', 'MP'])]
-    # print (df_prepared.head())
+    # # =========== DATA further Clear =============
+    # # only check the three phase data
+    # df = joblib.load('df_data.pkl')
+    # clear = Data_further_clear(df)
+    # clear.add_proj_phase()
+    # df_prepared = clear.add_type()
+    # df_prepared = df_prepared[df_prepared['phase'].isin(['DE', 'MT', 'MP'])]
+    # # print (df_prepared.head())
+    
+    # df_prepared_no_time = df_prepared.groupby(['phase', 'p_name', 't_type', 'c_type', 'p_type']).sum().reset_index()
+    # df_month_qty = df_prepared.groupby(['p_name', 'phase']).size().reset_index()
+    # df_prepared_no_time.drop(['month'], axis = 1, inplace = True)
+    
+    # df_month_qty.rename(columns = {0:'month_qty'}, inplace = True)
+    # df_prepared_no_time = df_prepared_no_time.merge(df_month_qty, left_on =['p_name', 'phase'], right_on = ['p_name', 'phase'])
+    # df_prepared_no_time['tesths_per_month'] = df_prepared_no_time['test_hs']/ df_prepared_no_time['month_qty']
+    # # df_prepared_no_time.to_csv('work_hours.csv',index = False)
+    # # print (df_prepared_no_time.head())
 
-
-    df_prepared_no_time = df_prepared.groupby(['phase', 'p_name', 't_type', 'c_type', 'p_type']).sum().reset_index()
-    df_month_qty = df_prepared.groupby(['p_name', 'phase']).size().reset_index()
-    df_month_qty.rename(columns = {0:'month_qty'}, inplace = True)
-    df_prepared_no_time = df_prepared_no_time.merge(df_month_qty, left_on =['p_name', 'phase'], right_on = ['p_name', 'phase'])
-    df_prepared_no_time['tesths_per_month'] = df_prepared_no_time['test_hs']/ df_prepared_no_time['month_qty']
-    # df_prepared_no_time.to_csv('work_hours.csv',index = False)
-    # print (df_prepared_no_time.head())
-
-    df_prepared_w_time = df_prepared.groupby(['year', 'month']).sum().reset_index()
-    ['phase', 't_type', 'c_type', 'p_type', 'year', 'month']
+    # df_prepared_w_time = df_prepared.groupby(['year', 'month']).sum().reset_index()
+    # ['phase', 't_type', 'c_type', 'p_type', 'year', 'month']
     # print (df_prepared_w_time.head())
     # print (df_prepared_no_time.head())
     
@@ -339,22 +385,23 @@ if __name__ == '__main__':
     # df_prepared_no_time.loc[df_prepared_no_time['p_type'] == 'sf', ].hist('test_hs', bins = 50)
     # plt.show()
 
-    # ============LINEAR REG==================
-    # print (df_prepared_no_time.head())
+    # # ============LINEAR REG==================
+    # # print (df_prepared_no_time.head())
     
-    lr_fit = LinearRegression()
-    y = df_prepared_no_time['test_hs']
-    X = pd.get_dummies(df_prepared_no_time[['phase', 'c_type', 'p_type']])
-    lr_fit.fit(X, y)
-    # print (X.head())
-    X_test = np.array([[1, 0, 0, 0, 1, 0, 1]])
-    # phase_DE  phase_MP  phase_MT  c_type_c  c_type_m  p_type_aio  p_type_sf
-    print (lr_fit.predict(X_test))
-    print (lr_fit.predict(np.array([[0, 1, 0, 0, 1, 0, 1]])))
-    print (lr_fit.predict(np.array([[0, 0, 1, 0, 1, 0, 1]])))
+    # lr_fit = LinearRegression()
+    # y = df_prepared_no_time['test_hs']
+    # X = pd.get_dummies(df_prepared_no_time[['phase', 'c_type', 'p_type']])
+    # lr_fit.fit(X, y)
+    # # print (X.head())
+    # X_test = np.array([[1, 0, 0, 0, 1, 0, 1]])
+    # # phase_DE  phase_MP  phase_MT  c_type_c  c_type_m  p_type_aio  p_type_sf
+    # print (lr_fit.predict(X_test))
+    # print (lr_fit.predict(np.array([[0, 1, 0, 0, 1, 0, 1]])))
+    # print (lr_fit.predict(np.array([[0, 0, 1, 0, 1, 0, 1]])))
     # tree = DecisionTreeRegressor()
     # tree.fit(X, y)
     # print (tree.score(X, y))
+
 
 
     

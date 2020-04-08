@@ -132,3 +132,5 @@ stopwords/*
 
 # specific file
 df_data.pkl
+
+*.png
