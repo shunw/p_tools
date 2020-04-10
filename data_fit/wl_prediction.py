@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import DateOffset
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
@@ -89,20 +89,22 @@ if __name__ == '__main__':
     y_2 = no_time[['tesths_per_month']]
 
     # ==================== module and prediction ====================
-    # linear = LinearRegression()
+    linear = LinearRegression()
     # linear.fit(X, y)
     # y_pred_l = linear.predict(test_df_dum)
     
-    
     tree = DecisionTreeRegressor()
-    tree.fit(X, y)
-    y_pred_t = tree.predict(test_df_dum)
+
+    test_alg = clone(tree)
+    test_alg_2 = clone(tree)
+    
+    test_alg.fit(X, y)
+    y_pred_t = test_alg.predict(test_df_dum)
     # test_df['lr_pred'] = y_pred_l
     test_df['month_qty'] = y_pred_t
 
-    tree_2 = DecisionTreeRegressor()
-    tree_2.fit(X, y_2)
-    y_pred_t = tree_2.predict(test_df_dum)
+    test_alg_2.fit(X, y_2)
+    y_pred_t = test_alg_2.predict(test_df_dum)
     test_df['hs_per_month'] = y_pred_t
     # print (test_df)
     # ==================== combine actual pro w/ predition ====================
@@ -148,8 +150,8 @@ if __name__ == '__main__':
     for tick in ax.get_xticklabels():
         tick.set_rotation(90)
         tick.set_fontsize(6)
-    plt.savefig('work_load.png')
-    # plt.show()
+    # plt.savefig('work_load_rm_bad.png')
+    plt.show()
 
     
     

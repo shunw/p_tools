@@ -198,6 +198,10 @@ class Work_load_Data():
         clear.add_proj_phase()
         self.df_prepared = clear.add_type()
         self.df_prepared = self.df_prepared[self.df_prepared['phase'].isin(['DE', 'MT', 'MP'])]
+
+        # ============== remove unreasonable data ============== 
+        self.df_prepared.drop(self.df_prepared[(self.df_prepared['phase'] == 'MP') & (self.df_prepared['p_name'] == 'Lark')].index, inplace = True)
+        self.df_prepared.drop(self.df_prepared[(self.df_prepared['phase'] == 'MP') & (self.df_prepared['p_name'] == 'Stella')].index, inplace = True)
         
         
     def no_time_data(self): 

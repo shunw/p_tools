@@ -33,7 +33,7 @@ class Anova_Bonferroni():
 
         
     def anov_cal(self): 
-        
+        self._anov_basic()
         self.grp_num = self.anov_df.shape[0]
 
         self.SSb = ((self.anov_df['mean'] - self.total_mean) ** 2 * self.anov_df['n']).sum()
@@ -52,6 +52,8 @@ class Anova_Bonferroni():
     def pairwise_cmp(self, alpha): 
         # use bonferroni correction method
         # suppose for the two side 
+        self.anov_cal()
+        
         pairwise_lower = []
         pairwise_upper = []
         comp_1 = []

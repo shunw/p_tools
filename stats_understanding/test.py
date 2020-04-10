@@ -2,46 +2,30 @@ from stats_anova import Anova_Bonferroni
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('LW.csv')
-cols = ['Device','PageNumber','Environment','Mode','FW_Rev','DCC_Rev', 'K_T_Cart', 'K_T_Cart Serial Num','TL_H_K', 'TL_V_K', 'TR_H_K', 'TR_V_K', 'CC_H_K', 'CC_V_K', 'BL_H_K', 'BL_V_K', 'BR_H_K', 'BR_V_K', 'K_H_AVG','K_V_AVG','K_AVG','K_Avg_DTA_PASS','K_H_Avg_DTA_PASS','K_V_Avg_DTA_PASS','DTA_Pass','DTA_Fail_Color']
+df = pd.read_excel('CFT_data_2.xlsx', header=0)
+cols = list(df.columns)
+remain_cols = ['Media Loading', 'Media Type Setting', 'Tray Side Guide', 'Tray Back Guide', 'Media Fanning', 'sum(# of Page)', 'Jam (Occurances)']
+df = df[remain_cols]
 
-cols_simp = ['TL_H_K', 'TL_V_K', 'TR_H_K', 'TR_V_K', 'CC_H_K', 'CC_V_K', 'BL_H_K', 'BL_V_K', 'BR_H_K', 'BR_V_K', 'K_H_AVG','K_V_AVG','K_AVG']
+m_load = 'Media Loading'
+m_type = 'Media Type Setting'
+t_side_guid = 'Tray Side Guide'
+t_back_guid = 'Tray Back Guide'
+m_f = 'Media Fanning'
+j_occur = 'Jam (Occurances)'
 
-cols_1 = ['Device','PageNumber','Environment','Mode','FW_Rev','DCC_Rev', 'K_T_Cart', 'K_T_Cart Serial Num','CC_H_K', 'CC_V_K']
+# print (df[m_type])
+# print (df[m_load])
 
-test_df = df[cols_1]
-na_1 = test_df[test_df['CC_H_K'].isnull()]
-test_df.dropna(subset = ['CC_H_K', 'CC_V_K'], inplace = True)
+from sklearn.preprocessing import OrdinalEncoder
 
-test_df['phase'] = test_df['Device'].apply(lambda x: 'MT' if 'MT' in x or 'PRT' in x else 'MP')
-test_df['product'] = test_df['Device'].apply(lambda x: 'teton' if 'Tet' in x else 'mogami')
-test_df['prod&phase'] = test_df['phase'] + test_df['product']
+# df_cat = df[[m_load, m_type, t_side_guid, t_back_guid, m_f]] # can have more than one category col
 
-# temp = test_df[['product', 'Device']]
-# print (temp.drop_duplicates())
-anova_comp = Anova_Bonferroni(test_df['CC_V_K'], test_df['prod&phase'])
-anova_comp._anov_basic()
-anova_comp_cal = anova_comp.anov_cal()
-print (anova_comp_cal)
-comp = anova_comp.pairwise_cmp(.05)
-# print (comp)
-# print (comp.loc[comp['j_significant'] == True].shape)
+# ordinal_encoder = OrdinalEncoder()
 
-# verify with the f one-way check
-from scipy import stats
-diff_phase = test_df['prod&phase'].unique()
-data_ls = []
-for p in diff_phase: 
-    data = test_df.loc[test_df['prod&phase'] == p, 'CC_V_K']
-    data_ls.append(data)
-a, b, c, d = data_ls
-stat, pvalue = stats.f_oneway(a, b, c, d)
-print (stat, pvalue)
+# df_cat_encoded = ordinal_encoder.fit_transform(df_cat)
 
-from statsmodels.stats.multicomp import pairwise_tukeyhsd, MultiComparison
-
-mc = MultiComparison(test_df['CC_V_K'], test_df['prod&phase'])
-result = mc.tukeyhsd()
-# print (result)
-
-print (stats.kruskal(*data_ls))
+# a = ordinal_encoder.categories_ # to check the the array
+# print (a)
+com = Anova_Bonferroni(df[j_occur], df[m_f])
+print (com.anov_cal())
