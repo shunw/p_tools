@@ -1,44 +1,35 @@
-# To support both python 2 and python 3
-from __future__ import division, print_function, unicode_literals
-
-# Common imports
+import pandas as pd
 import numpy as np
-import os
-
-# to make this notebook's output stable across runs
-np.random.seed(42)
-
-# To plot pretty figures
-# %matplotlib inline
-import matplotlib
 import matplotlib.pyplot as plt
-plt.rcParams['axes.labelsize'] = 14
-plt.rcParams['xtick.labelsize'] = 12
-plt.rcParams['ytick.labelsize'] = 12
+import gzip
+import pickle
 
-# Where to save the figures
-PROJECT_ROOT_DIR = "."
-CHAPTER_ID = "decision_trees"
+def line_format(label):
+    """
+    Convert time label to the format of pandas line plot
+    """
+    month = label.month_name()[:3]
+    if month == 'Jan':
+        month += f'\n{label.year}'
+    return month
 
-def image_path(fig_id):
-    return os.path.join(PROJECT_ROOT_DIR, "images", CHAPTER_ID, fig_id)
+if __name__ == '__main__': 
+    # df = pd.read_csv('covid_19.csv')
+    # confirmed = df.loc[df['Case_Type'] == 'Confirmed', ['Cases', 'Date']]
+    
+    # confirmed = confirmed.groupby(['Date']).sum().reset_index()
+    
+    # confirmed['Date'] = confirmed['Date'].apply(pd.to_datetime, format = '%m/%d/%Y')
+    
+    # confirmed.set_index('Date', inplace = True)
+    # # print (confirmed.head())
+    # # print (confirmed.dtypes)
+    # ax = confirmed.plot(kind = 'bar', y = 'Cases')
+    # ax.set_xticklabels(map(lambda x: line_format(x), confirmed.index))
+    # plt.show()
+    
 
-def save_fig(fig_id, tight_layout=True):
-    print("Saving figure", fig_id)
-    if tight_layout:
-        plt.tight_layout()
-    plt.savefig(image_path(fig_id) + ".png", format='png', dpi=300)
-
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
-
-iris = load_iris()
-X = iris.data[:, 2:]
-y = iris.target
-
-tree_clf = DecisionTreeClassifier(max_depth = 2)
-tree_clf.fit(X, y)
-
-export_graphviz(tree_clf, out_file = image_path('iris_tree.dot'), feature_names = iris.feature_names[2:], class_names = iris.target_names, rounded = True, filled = True)
-
-export_graphviz(tree_clf)
+    f = open('train-labels-idx1-ubyte', encoding = 'utf-8')
+    for line in f: 
+        print (line)
+        break

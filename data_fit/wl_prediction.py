@@ -10,9 +10,12 @@ from pandas.tseries.offsets import DateOffset
 
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
 class CombineAttributes(BaseEstimator, TransformerMixin): 
@@ -53,6 +56,22 @@ def line_format(label):
         month += f'\n{label.year}'
     return month
 
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+
+def plot_learning_curves(model, X, y): 
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = .2)
+    train_errors, val_errors = [], []
+
+    for m in range(1, len(X_train)): 
+        model.fit(X_train[:m], y_train[:m])
+        y_train_predict = model.predict(X_train[:m])
+        y_val_predict = model.predict(X_val)
+        train_errors.append(mean_squared_error(y_train[:m], y_train_predict))
+        val_errors.append(mean_squared_error(y_val, y_val_predict))
+    
+    plt.plot(np.sqrt(train_errors), 'r-+', linewidth = 2, label = 'train')
+    plt.plot(np.sqrt(val_errors), 'b-', linewidth = 3, label = 'val')
 
 if __name__ == '__main__': 
     data_m = Work_load_Data()
@@ -95,8 +114,15 @@ if __name__ == '__main__':
     
     tree = DecisionTreeRegressor()
 
-    test_alg = clone(tree)
-    test_alg_2 = clone(tree)
+    rf = RandomForestRegressor(n_estimators = 100)
+    ef = ExtraTreesRegressor(n_estimators = 100)
+    grbt = GradientBoostingRegressor(n_estimators= 100)
+
+    svr = SVR(gamma= 'scale')
+
+    test_alg = clone(grbt)
+    test_alg_2 = clone(grbt)
+    
     
     test_alg.fit(X, y)
     y_pred_t = test_alg.predict(test_df_dum)
@@ -107,6 +133,19 @@ if __name__ == '__main__':
     y_pred_t = test_alg_2.predict(test_df_dum)
     test_df['hs_per_month'] = y_pred_t
     # print (test_df)
+
+    # # ==================== check learning curve ====================
+    # plot_learning_curves(test_alg, X, y)
+    # plt.show()
+    
+    # # ================== HIST PLOT ==================
+    # # plt.hist(y_pred, bins = 50, alpha = .5, label = 'pred')
+    # # plt.hist(y.to_numpy(), bins = 50, alpha = .5, label = 'act')
+    # # plt.legend(loc = 'upper right')
+    # # plt.show()
+   
+    # ================== BAR PLOT TIME SERIES==================
+
     # ==================== combine actual pro w/ predition ====================
     
     pre_w_project = w_pro_time.merge(test_df, left_on = ['phase', 'c_type', 'p_type'], right_on = ['phase', 'c_type', 'p_type'], )
@@ -125,33 +164,27 @@ if __name__ == '__main__':
     # print (w_time.head())
     # print (pre_w_project.head())
 
-    # # ================== HIST PLOT ==================
-    # # plt.hist(y_pred, bins = 50, alpha = .5, label = 'pred')
-    # # plt.hist(y.to_numpy(), bins = 50, alpha = .5, label = 'act')
-    # # plt.legend(loc = 'upper right')
-    # # plt.show()
-
-    # ================== BAR PLOT TIME SERIES==================
+    # ==================== plot ====================
     # ax.bar(pd.to_datetime(w_time['date'], format='%Y-%m-%d'), w_time['test_hs'])
     # ax.xaxis_date()
+
+    comp_test_hs = w_time.merge(w_time_new, left_on = 'date', right_on = 'new_date')
+    
+    print (mean_squared_error(comp_test_hs[['test_hs']], comp_test_hs[['hs_per_month']]) ** .5)
+
     w_time.set_index('date', inplace = True)
     
     w_time_new.set_index('new_date', inplace = True)
-    
-    # w_time.plot(kind = 'bar', y = 'test_hs')
-    # ax = w_time.plot.bar(x = 'date', y = 'test_hs')
-    # ax.xaxis.set_major_formatter('%Y-%m-%d')
-    # Note that we specify rot here
 
-    ax = w_time.plot(kind='bar', y = 'test_hs', figsize=(20, 9), color='#2ecc71', rot=0, alpha = .5)
-    ax = w_time_new.plot(kind='bar', y = 'hs_per_month', figsize=(20, 9), color='red', rot=0, ax = ax, alpha = .5)
-    ax.set_xticklabels(map(lambda x: line_format(x), w_time.index))
+    # ax = w_time.plot(kind='bar', y = 'test_hs', figsize=(20, 9), color='#2ecc71', rot=0, alpha = .5)
+    # ax = w_time_new.plot(kind='bar', y = 'hs_per_month', figsize=(20, 9), color='red', rot=0, ax = ax, alpha = .5)
+    # ax.set_xticklabels(map(lambda x: line_format(x), w_time.index))
 
-    for tick in ax.get_xticklabels():
-        tick.set_rotation(90)
-        tick.set_fontsize(6)
-    # plt.savefig('work_load_rm_bad.png')
-    plt.show()
+    # for tick in ax.get_xticklabels():
+    #     tick.set_rotation(90)
+    #     tick.set_fontsize(6)
+    # plt.savefig('work_load_svc.png')
+    # # plt.show()
 
     
     

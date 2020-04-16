@@ -192,7 +192,6 @@ class Data_further_clear():
 class Work_load_Data():
     # this is to return the data
     def __init__(self): 
-        pass
         df = joblib.load('df_data.pkl')
         clear = Data_further_clear(df)
         clear.add_proj_phase()
