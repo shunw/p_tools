@@ -20,7 +20,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 '''
-purpose: try to predict the work load
+PURPOSE: prepare the data
+purpose: try to predict the work load; 
 assumption: 
 0. before the work
     1. check if diff by project? <= with the page amount/ speed/ aio

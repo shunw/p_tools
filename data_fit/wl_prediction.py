@@ -164,13 +164,22 @@ if __name__ == '__main__':
     # print (w_time.head())
     # print (pre_w_project.head())
 
+    # ==================== cal_errors ====================
+
+    # error for the test hours per month
+    comp_test_hs = w_time.merge(w_time_new, left_on = 'date', right_on = 'new_date')
+    mse_for_hs = mean_squared_error(comp_test_hs[['test_hs']], comp_test_hs[['hs_per_month']]) ** .5 # mean squared error
+    
+    hs_act = comp_test_hs[['test_hs']].mean()
+    hs_pred = comp_test_hs[['hs_per_month']].mean()
+
+    percentage_error = (hs_pred - mse_for_hs) / hs_pred # error for the percentage error between the actual each month test hours and predict test hours for each month
+    
+    # error for the total test hours per project
+
     # ==================== plot ====================
     # ax.bar(pd.to_datetime(w_time['date'], format='%Y-%m-%d'), w_time['test_hs'])
     # ax.xaxis_date()
-
-    comp_test_hs = w_time.merge(w_time_new, left_on = 'date', right_on = 'new_date')
-    
-    print (mean_squared_error(comp_test_hs[['test_hs']], comp_test_hs[['hs_per_month']]) ** .5)
 
     w_time.set_index('date', inplace = True)
     
