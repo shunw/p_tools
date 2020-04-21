@@ -217,6 +217,8 @@ class Work_load_Data():
         
         return df_prepared_no_time
 
+    
+
     def with_time_data(self): 
         df_prepared_w_time = self.df_prepared.groupby(['year', 'month']).sum().reset_index()
 
@@ -233,6 +235,22 @@ class Work_load_Data():
         df_w_begin_time.drop_duplicates(remain_col, keep='first', inplace = True)
         
         return df_w_begin_time
+
+    def w_begin_time_tradition(self): 
+        '''
+        return the project test hours with the traditional calculation method
+        '''
+        df_basic = self.w_begin_time()
+        df_basic.loc[df_basic['phase'] == 'MP', 'units'] = 9.0
+        df_basic.loc[df_basic['phase'] == 'MT', 'units'] = 6.0
+        df_basic.loc[df_basic['phase'] == 'DE', 'units'] = 3.0
+        
+        df_basic.loc[df_basic['p_type'] == 'sf', 'dur'] = 2.0 # 2 months
+        df_basic.loc[df_basic['p_type'] == 'aio', 'dur'] = 3.0 # 2 months
+
+        df_basic['total_hr_tradition'] = ((df_basic['units'] / 3 + .5) * 2 + .5 + .25 + .25) * 8 * 5 * 4 * df_basic['dur']
+        return df_basic
+
 
 if __name__ == '__main__':
     pass

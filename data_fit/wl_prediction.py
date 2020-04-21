@@ -75,9 +75,11 @@ def plot_learning_curves(model, X, y):
 
 if __name__ == '__main__': 
     data_m = Work_load_Data()
-    no_time = data_m.no_time_data()
+    no_time = data_m.no_time_data() # no time, actual test hours
     w_time = data_m.with_time_data()
     w_pro_time = data_m.w_begin_time()
+
+    no_time_trd = data_m.w_begin_time_tradition() # traditional calculation
     
     # remove unreasonable data
     no_time.drop(no_time[(no_time['phase'] == 'MP') & (no_time['p_name'] == 'Lark')].index, inplace = True)
@@ -147,9 +149,13 @@ if __name__ == '__main__':
     # ================== BAR PLOT TIME SERIES==================
 
     # ==================== combine actual pro w/ predition ====================
-    
+
     pre_w_project = w_pro_time.merge(test_df, left_on = ['phase', 'c_type', 'p_type'], right_on = ['phase', 'c_type', 'p_type'], )
     
+    pre_only_project = pre_w_project.copy() # only project and its total test hours
+
+    # with time, add the test hours / month
+    # ===================================================
     pre_w_project = pre_w_project.loc[pre_w_project.index.repeat(pre_w_project['month_qty'])]
     # pre_w_project['month_incr'] = [1] * pre_w_project.shape[0]
     pre_w_project['for_month_incr'] = pre_w_project['p_name'] + pre_w_project['phase']
@@ -161,12 +167,21 @@ if __name__ == '__main__':
     w_time_pred = pre_w_project[need_col]
     
     w_time_new = w_time_pred.groupby('new_date').sum().reset_index()
-    # print (w_time.head())
-    # print (pre_w_project.head())
+
+    # with no time, only project
+    # ===================================================
+    pre_only_project['total_hr_pred'] = pre_only_project['month_qty'] * pre_only_project['hs_per_month']
+    
+    p_need_col = ['p_name', 'phase', 'total_hr_tradition', 'total_hr_pred', 'test_hs']
+
+    pre_only_project = pre_only_project.merge(no_time_trd, left_on = ['p_name', 'phase'], right_on = ['p_name', 'phase'])
+    pre_only_project = pre_only_project.merge(no_time, left_on = ['p_name', 'phase'], right_on = ['p_name', 'phase'])[p_need_col]
+    
 
     # ==================== cal_errors ====================
 
     # error for the test hours per month
+    # ===================================================
     comp_test_hs = w_time.merge(w_time_new, left_on = 'date', right_on = 'new_date')
     mse_for_hs = mean_squared_error(comp_test_hs[['test_hs']], comp_test_hs[['hs_per_month']]) ** .5 # mean squared error
     
@@ -175,8 +190,12 @@ if __name__ == '__main__':
 
     percentage_error = (hs_pred - mse_for_hs) / hs_pred # error for the percentage error between the actual each month test hours and predict test hours for each month
     
-    # error for the total test hours per project
+    # # error for the total test hours per project
+    # # ===================================================
+    # print (pre_only_project[['phase', 'total_hr_tradition', 'total_hr_pred', 'test_hs']].groupby('phase').mean())
 
+    # print (pre_only_project[['test_hs', 'total_hr_tradition', 'total_hr_pred']].mean())
+    
     # ==================== plot ====================
     # ax.bar(pd.to_datetime(w_time['date'], format='%Y-%m-%d'), w_time['test_hs'])
     # ax.xaxis_date()

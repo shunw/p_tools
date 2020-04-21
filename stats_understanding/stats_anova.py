@@ -42,7 +42,7 @@ class Anova_Bonferroni():
         
         self.SSw = (self.anov_df['var'] * (self.anov_df['n'] - 1)).sum()
         self.dfw = self.df.shape[0] - self.anov_df.shape[0] # == dfd
-        self.MSw = self.SSw / self.dfw
+        self.MSw = self.SSw / self.dfw # variation within group/ unexplainable/ Mean Square Within
         
         self.Fstat = self.MSb/ self.MSw
         
