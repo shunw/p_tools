@@ -205,6 +205,9 @@ class Work_load_Data():
         
         
     def no_time_data(self): 
+        '''
+        only project information with the total test hours
+        '''
         df_prepared_no_time = self.df_prepared.groupby(['phase', 'p_name', 't_type', 'c_type', 'p_type']).sum().reset_index()
         df_prepared_no_time.drop(['month'], axis = 1, inplace = True)
         
@@ -220,6 +223,9 @@ class Work_load_Data():
     
 
     def with_time_data(self): 
+        '''
+        only with time, no project information
+        '''
         df_prepared_w_time = self.df_prepared.groupby(['year', 'month']).sum().reset_index()
 
         df_prepared_w_time['date'] = df_prepared_w_time[['year','month']].apply(lambda x: '{year}-{month}-{day}'.format(year = x['year'], month = x['month'], day = 1), axis=1)
@@ -228,7 +234,10 @@ class Work_load_Data():
         return df_prepared_w_time
     
     def w_begin_time(self): 
-        # return the dataframe, with begin month start that project
+        '''
+        return the dataframe, with begin month start that project
+        no each month detail for one project
+        '''
         df_w_begin_time = self.df_prepared[['p_name', 'phase', 'date', 'c_type', 'p_type', 't_type']]
         remain_col = ['p_name', 'phase', 'c_type', 'p_type', 't_type']
         df_w_begin_time.sort_values(['p_name', 'date'], inplace = True)
@@ -238,7 +247,7 @@ class Work_load_Data():
 
     def w_begin_time_tradition(self): 
         '''
-        return the project test hours with the traditional calculation method
+        return the project test hours with the traditional calculation/ estimation method
         '''
         df_basic = self.w_begin_time()
         df_basic.loc[df_basic['phase'] == 'MP', 'units'] = 9.0
@@ -250,6 +259,17 @@ class Work_load_Data():
 
         df_basic['total_hr_tradition'] = ((df_basic['units'] / 3 + .5) * 2 + .5 + .25 + .25) * 8 * 5 * 4 * df_basic['dur']
         return df_basic
+
+    def proj_each_month(self): 
+        '''
+        return with each month detail information for one project
+        the data purpose is to predict the each month detail for one project
+        '''
+        df_proj_each_month = self.df_prepared.sort_values(['p_name', 'phase', 'date']).copy()
+        
+        df_proj_each_month['month_incr']= df_proj_each_month.groupby(['p_name', 'phase']).cumcount() + 1
+        need_col = ['p_name', 'phase', 'test_hs', 'month_incr', 'c_type', 'p_type', 't_type']
+        return df_proj_each_month[need_col]
 
 
 if __name__ == '__main__':

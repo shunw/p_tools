@@ -14,7 +14,7 @@ from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor, Gradien
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
@@ -22,7 +22,7 @@ class CombineAttributes(BaseEstimator, TransformerMixin):
     '''
     add this to add/ minus col easier & more standard
     '''
-    def __init__(self, move_p_name = True, move_ttype = True, est_target = 'test_hs'):
+    def __init__(self, move_p_name = True, move_ttype = True, est_target = 'test_hs', w_month = False):
         '''
         input: move_* is to move two columns; est_target is which target col to estimate ['tesths_per_month', 'test_hs', 'month_qty']
         ''' 
@@ -31,17 +31,23 @@ class CombineAttributes(BaseEstimator, TransformerMixin):
         self.est_target = est_target
         self.potential_target = ['test_hs', 'month_qty', 'tesths_per_month']
         self.potential_target.remove(est_target)
+        self.w_month = w_month
+        
 
     def fit(self, X, y = None): 
         return self
     
     def transform(self, X, y = None): 
+    
         if self.move_p_name: 
             X.drop(['p_name'], axis = 1, inplace = True)
         if self.move_ttype: 
             X.drop(['t_type'], axis = 1, inplace = True)
-        for i in self.potential_target: 
-            X.drop([i], axis = 1, inplace = True)
+        
+        if not self.w_month: 
+    
+            for i in self.potential_target: 
+                X.drop([i], axis = 1, inplace = True)
         return X
         
 def _add_month(x): 
@@ -78,6 +84,7 @@ if __name__ == '__main__':
     no_time = data_m.no_time_data() # no time, actual test hours
     w_time = data_m.with_time_data()
     w_pro_time = data_m.w_begin_time()
+    pro_w_each_m = data_m.proj_each_month()
 
     no_time_trd = data_m.w_begin_time_tradition() # traditional calculation
     
@@ -87,16 +94,32 @@ if __name__ == '__main__':
     
     # print (no_time.loc[(no_time['phase'] == 'MP') & (no_time['c_type'] == 'm') & (no_time['p_type'] == 'aio'), 'test_hs'].mean())
     
-    # prepare the test dummy data
+    # ================ prepare the test dummy data ================ 
+
     phase = ['DE', 'MT', 'MP']
     color = ['c', 'm']
     p_type = ['sf', 'aio']
-    cols_ord = ['phase', 'c_type', 'p_type']
-    test_data_ls = [c for c in itertools.product(phase, color, p_type)]
-    test_df = pd.DataFrame(columns = cols_ord, data = test_data_ls)
-    test_df_dum = pd.get_dummies(test_df)
+    # cols_ord = ['phase', 'c_type', 'p_type']
+    cols_ord = ['phase', 'c_type', 'p_type', 'month_incr']
+    month_incr_ls = list(range(1, pro_w_each_m['month_incr'].max() + 2))
     
-    # prepare the training data
+    # only with project, no each month
+    # =============================================================
+    
+    test_data_ls = [c for c in itertools.product(phase, color, p_type)]
+    test_df = pd.DataFrame(columns = cols_ord[: -1], data = test_data_ls)
+    test_df_dum = pd.get_dummies(test_df)
+
+    # with project, with each month
+    # =============================================================
+    test_data_ls_m = [c for c in itertools.product(phase, color, p_type, month_incr_ls)]
+    test_df_m = pd.DataFrame(columns = cols_ord, data = test_data_ls_m)
+    test_df_dum_m = pd.get_dummies(test_df_m)
+
+    # ================ prepare the training data ================ 
+
+    # only with project, no each month
+    # =============================================================
     y_col = 'month_qty' # ['test_hs', 'month_qty', 'tesths_per_month']
     col_no_y = list(no_time.columns)
     col_no_y.remove(y_col)
@@ -104,11 +127,30 @@ if __name__ == '__main__':
     X = no_time[col_no_y]
     data_pre_transfer = CombineAttributes(est_target = y_col)
     data_pre_transfer.fit_transform(X)
-    
     X = pd.get_dummies(X)
     y = no_time[[y_col]]
+
+    scaler = StandardScaler()
+    X_trans = scaler.fit_transform(X)
     y_2 = no_time[['tesths_per_month']]
 
+    # with project, with each month
+    # =============================================================
+    y_col_m = 'test_hs'
+
+    col_no_y_m = list(pro_w_each_m.columns)
+    col_no_y_m.remove(y_col_m)
+    
+    Xm = pro_w_each_m[col_no_y_m]
+    data_pre_transfer_m = CombineAttributes(est_target = 'test_hs', w_month = True)
+    data_pre_transfer_m.fit_transform(Xm)
+    Xm = pd.get_dummies(Xm)
+
+    scaler_m = StandardScaler()
+    Xm_scale = scaler_m.fit_transform(Xm)
+    
+    ym = pro_w_each_m[[y_col_m]]
+    
     # ==================== module and prediction ====================
     linear = LinearRegression()
     # linear.fit(X, y)
@@ -122,20 +164,32 @@ if __name__ == '__main__':
 
     svr = SVR(gamma= 'scale')
 
-    test_alg = clone(grbt)
-    test_alg_2 = clone(grbt)
+    test_alg = clone(svr)
+    test_alg_2 = clone(svr)
+    test_alg_m = clone(svr)
     
-    
-    test_alg.fit(X, y)
-    y_pred_t = test_alg.predict(test_df_dum)
+    # only with project, no each month
+    # =============================================================
+    test_df_dum_scale = scaler.transform(test_df_dum)
+    test_alg.fit(X_trans, y)
+    y_pred_t = test_alg.predict(test_df_dum_scale)
     # test_df['lr_pred'] = y_pred_l
     test_df['month_qty'] = y_pred_t
 
-    test_alg_2.fit(X, y_2)
-    y_pred_t = test_alg_2.predict(test_df_dum)
+    test_alg_2.fit(X_trans, y_2)
+    y_pred_t = test_alg_2.predict(test_df_dum_scale)
     test_df['hs_per_month'] = y_pred_t
     # print (test_df)
+    
+    # with project, with each month
+    # =============================================================
+    test_df_dum_m_scale = scaler_m.transform(test_df_dum_m)
 
+    test_alg_m.fit(Xm_scale, ym)
+    y_pred_m = test_alg_m.predict(test_df_dum_m_scale)
+    test_df_m['test_hs_m_pred'] = y_pred_m
+    print (test_df_m.shape)
+    print (test_df_m.head())
     # # ==================== check learning curve ====================
     # plot_learning_curves(test_alg, X, y)
     # plt.show()
@@ -180,7 +234,7 @@ if __name__ == '__main__':
 
     # ==================== cal_errors ====================
 
-    # error for the test hours per month
+    # error for the test hours per month (avg)
     # ===================================================
     comp_test_hs = w_time.merge(w_time_new, left_on = 'date', right_on = 'new_date')
     mse_for_hs = mean_squared_error(comp_test_hs[['test_hs']], comp_test_hs[['hs_per_month']]) ** .5 # mean squared error
@@ -190,11 +244,11 @@ if __name__ == '__main__':
 
     percentage_error = (hs_pred - mse_for_hs) / hs_pred # error for the percentage error between the actual each month test hours and predict test hours for each month
     
-    # # error for the total test hours per project
-    # # ===================================================
-    # print (pre_only_project[['phase', 'total_hr_tradition', 'total_hr_pred', 'test_hs']].groupby('phase').mean())
+    # error for the total test hours per project
+    # ===================================================
+    print (pre_only_project[['phase', 'total_hr_tradition', 'total_hr_pred', 'test_hs']].groupby('phase').mean())
 
-    # print (pre_only_project[['test_hs', 'total_hr_tradition', 'total_hr_pred']].mean())
+    print (pre_only_project[['test_hs', 'total_hr_tradition', 'total_hr_pred']].mean())
     
     # ==================== plot ====================
     # ax.bar(pd.to_datetime(w_time['date'], format='%Y-%m-%d'), w_time['test_hs'])
