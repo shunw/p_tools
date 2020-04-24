@@ -138,3 +138,5 @@ df_data.pkl
 *.gz
 
 *.avi
+*.jpeg
+*.mp4

@@ -190,19 +190,61 @@ class Data_further_clear():
         self.df['p_type'] = self.df['t_type'].apply(lambda x: x.split('_')[1])
         return self.df
 
-class Work_load_Data():
-    # this is to return the data
+class Training_Testing_data_get(): 
+    '''
+    this is to get the work loading raw data
+    and put them into Work_load_Data class for further dealing. 
+    '''
     def __init__(self): 
         df = joblib.load('df_data.pkl')
         clear = Data_further_clear(df)
         clear.add_proj_phase()
-        self.df_prepared = clear.add_type()
-        self.df_prepared = self.df_prepared[self.df_prepared['phase'].isin(['DE', 'MT', 'MP'])]
+        self.df = clear.add_type()
+        self.df = self.df[self.df['phase'].isin(['DE', 'MT', 'MP'])]
 
         # ============== remove unreasonable data ============== 
-        self.df_prepared.drop(self.df_prepared[(self.df_prepared['phase'] == 'MP') & (self.df_prepared['p_name'] == 'Lark')].index, inplace = True)
-        self.df_prepared.drop(self.df_prepared[(self.df_prepared['phase'] == 'MP') & (self.df_prepared['p_name'] == 'Stella')].index, inplace = True)
-        
+        self.df.drop(self.df[(self.df['phase'] == 'MP') & (self.df['p_name'] == 'Lark')].index, inplace = True)
+        self.df.drop(self.df[(self.df['phase'] == 'MP') & (self.df['p_name'] == 'Stella')].index, inplace = True)
+    
+    def training_test_split(self, split_date = '2019-01-01'):
+        '''
+        splite the data with training and test test by split date
+        split date format: '2019-01-01'
+        return the train, train_time, test, test_time
+        '''
+        train_df = self.df.loc[self.df['date'] < split_date, ]
+        test_df = self.df.loc[self.df['date'] >= split_date, ]
+        train_df_prepare = Work_load_Data(train_df)
+        test_df_prepare = Work_load_Data(test_df)
+        train_no_time, train_w_time = train_df_prepare.proj_each_month()
+        test_no_time, test_w_time = test_df_prepare.proj_each_month()
+        return train_no_time, train_w_time, test_no_time, test_w_time
+    
+    def tradition_est_split(self, split_date):
+        '''
+        splite the data by split date
+        split date format: '2019-01-01'
+        return the before_df, after_df
+        '''
+        tradition_df = Work_load_Data(self.df).w_begin_time_tradition()
+        before_df = tradition_df.loc[tradition_df['date'] < split_date, ]
+        after_df = tradition_df.loc[tradition_df['date'] >= split_date, ]
+        return before_df, after_df
+
+    def all_data(self):
+        '''
+        to help transition period
+        '''
+        return Work_load_Data(self.df)
+
+
+class Work_load_Data():
+    def __init__(self, df): 
+        '''
+        input: dataframe; 
+            purpose: training and testing test separately input
+        '''
+        self.df_prepared = df
         
     def no_time_data(self): 
         '''
@@ -269,7 +311,7 @@ class Work_load_Data():
         
         df_proj_each_month['month_incr']= df_proj_each_month.groupby(['p_name', 'phase']).cumcount() + 1
         need_col = ['p_name', 'phase', 'test_hs', 'month_incr', 'c_type', 'p_type', 't_type']
-        return df_proj_each_month[need_col]
+        return df_proj_each_month[need_col], df_proj_each_month[['p_name', 'phase', 'test_hs', 'month_incr', 'date']]
 
 
 if __name__ == '__main__':
