@@ -250,18 +250,18 @@ if __name__ == '__main__':
     test_alg_2 = clone(grbt)
     test_alg_m = clone(grbt)
     
-    # # only with project, no each month
-    # # =============================================================
-    # test_df_dum_scale = scaler.transform(test_df_dum)
-    # test_alg.fit(X_trans, y)
-    # y_pred_t = test_alg.predict(test_df_dum_scale)
-    # # test_df['lr_pred'] = y_pred_l
-    # test_df['month_qty'] = y_pred_t
+    # only with project, no each month
+    # =============================================================
+    test_df_dum_scale = scaler.transform(test_df_dum)
+    test_alg.fit(X_trans, y)
+    y_pred_t = test_alg.predict(test_df_dum_scale)
+    # test_df['lr_pred'] = y_pred_l
+    test_df['month_qty'] = y_pred_t
 
-    # test_alg_2.fit(X_trans, y_2)
-    # y_pred_t = test_alg_2.predict(test_df_dum_scale)
-    # test_df['hs_per_month'] = y_pred_t
-    # # print (test_df)
+    test_alg_2.fit(X_trans, y_2)
+    y_pred_t = test_alg_2.predict(test_df_dum_scale)
+    test_df['hs_per_month'] = y_pred_t
+    # print (test_df)
     
     # # with project, with each month
     # # =============================================================
