@@ -169,7 +169,59 @@ def prepare_df_each_month_hours(df_projects_w_months):
     X_need_col = ['phase', 'month_incr', 'c_type', 'p_type']
 
     return df[X_need_col], df[['test_hs']]
+def chosen_alg(): 
+    '''
+    this is to choose the algorithm for three fit
+    '''
+    linear = LinearRegression()
     
+    tree = DecisionTreeRegressor()
+
+    rf = RandomForestRegressor(n_estimators = 100)
+    ef = ExtraTreesRegressor(n_estimators = 100)
+    grbt = GradientBoostingRegressor(n_estimators= 100)
+
+    svr = SVR(gamma= 'scale')
+
+    test_alg_total_hs = clone(rf) # alg to predict the test hours totally
+    test_alg_month_qty = clone(rf) # alg to predict the month qty
+    test_alg_month_hs = clone(rf) # alg to predict test hours per month
+
+    return test_alg_total_hs, test_alg_month_qty, test_alg_month_hs
+
+def combine_test_data_w_dummy_prediction_total_hs(test_no_time, pred_temp_hs_total): 
+    '''
+    input: 
+        pred_temp_hs_total is the template, created by phase, color, function combination
+        test_no_time is the test data
+    0 groupby sum on the test_no_time
+    1 combine the dummy data with the test_data on the phase, c type, p type
+    '''
+    test_data = test_no_time.groupby(['p_name', 'phase', 'c_type', 'p_type', 't_type']).sum().reset_index().head()
+    col_map = ['phase', 'c_type', 'p_type']
+    test_data = test_data.merge(pred_temp_hs_total, left_on = col_map, right_on = col_map)
+    mse = mean_squared_error(test_data[['test_hs']], test_data[['pred_totaly_hs']]) ** .5
+    print (mse)
+    return test_data, mse
+
+def combine_test_data_w_dummy_prediction_each_month(test_with_time, pred_temp_each_month): 
+    '''
+    input: 
+        pred_temp_each_month is the template, created by phase, color, function, month_incr combination
+        test_with_time is the test data
+    
+    1 combine the dummy data with the test_data on the phase, c type, p type, month_incr
+    '''
+    col_map = ['phase', 'c_type', 'p_type', 'month_incr']
+    test_data = test_with_time.merge(pred_temp_each_month, left_on = col_map, right_on = col_map)
+
+    mse_each_month = mean_squared_error(test_data[['test_hs']], test_data[['pred_month_hs']]) ** .5
+
+    test_data_total_hs = test_data.groupby(['p_name', 'phase', 'c_type', 'p_type', 't_type']).sum().reset_index()
+    mse_total_hs = mean_squared_error(test_data_total_hs[['test_hs']], test_data_total_hs[['pred_month_hs']]) ** .5
+    print (mse_each_month, mse_total_hs)
+    return test_data
+
 if __name__ == '__main__': 
     data_m = Training_Testing_data_get().all_data()
     no_time = data_m.no_time_data() # no time, actual test hours
@@ -184,18 +236,6 @@ if __name__ == '__main__':
     train_no_time, train_w_time, test_no_time, test_w_time = data_new.training_test_split()
     # ================ prepare the training data ================ 
 
-    # only with project, no each month
-    # =============================================================
-    # y_col = 'month_qty' # ['test_hs', 'month_qty', 'tesths_per_month']
-    # col_no_y = list(no_time.columns)
-    # col_no_y.remove(y_col)
-    # X = no_time[col_no_y]
-    # data_pre_transfer = CombineAttributes(est_target = y_col)
-    # data_pre_transfer.fit_transform(X)
-
-
-    # # print (X.head())
-    
     X_4_train_hs_total, y_train_month_qty, y_train_hs_total = prepare_df_totaly_hours(train_no_time)
     X_4_train_hs_total_dummy = pd.get_dummies(X_4_train_hs_total)
     
@@ -204,27 +244,6 @@ if __name__ == '__main__':
     
     # # with project, with each month
     # # =============================================================
-    # y_col_m = 'test_hs'
-
-    # col_no_y_m = list(pro_w_each_m.columns)
-    # col_no_y_m.remove(y_col_m)
-    
-    # Xm = pro_w_each_m[col_no_y_m]
-    
-    # # print (pro_w_each_m.shape)
-    # data_pre_transfer_m = CombineAttributes(est_target = 'test_hs', w_month = True)
-    # data_pre_transfer_m.fit_transform(Xm)
-    # # print (Xm.head())
-    # # print (pro_w_each_m.shape)
-    # # print (pro_w_each_m.head())
-    # print (Xm.head())
-    # Xm = pd.get_dummies(Xm)
-
-    # scaler_m = StandardScaler()
-    # Xm_scale = scaler_m.fit_transform(Xm)
-    
-    # ym = pro_w_each_m[[y_col_m]]
-
     X_4_train_hs_each_month, y_train_hs_each_month = prepare_df_each_month_hours(train_no_time)
     X_4_train_hs_each_month_dummy = pd.get_dummies(X_4_train_hs_each_month)
     
@@ -233,43 +252,37 @@ if __name__ == '__main__':
 
 
     # ==================== get two kinds of dummy data ====================
-    test_hs_total, test_hs_total_dum, test_hs_each_month, test_hs_each_month_dum = get_dummy_data()
+    pred_temp_hs_total, pred_temp_hs_total_dum, pred_temp_hs_each_month, pred_temp_hs_each_month_dum = get_dummy_data()
 
     # ==================== module and prediction ====================
-    linear = LinearRegression()
-    
-    tree = DecisionTreeRegressor()
-
-    rf = RandomForestRegressor(n_estimators = 100)
-    ef = ExtraTreesRegressor(n_estimators = 100)
-    grbt = GradientBoostingRegressor(n_estimators= 100)
-
-    svr = SVR(gamma= 'scale')
-
-    test_alg = clone(grbt)
-    test_alg_2 = clone(grbt)
-    test_alg_m = clone(grbt)
+    test_alg_total_hs, test_alg_month_qty, test_alg_month_hs = chosen_alg()
     
     # only with project, no each month
     # =============================================================
-    test_df_dum_scale = scaler.transform(test_df_dum)
-    test_alg.fit(X_trans, y)
-    y_pred_t = test_alg.predict(test_df_dum_scale)
-    # test_df['lr_pred'] = y_pred_l
-    test_df['month_qty'] = y_pred_t
-
-    test_alg_2.fit(X_trans, y_2)
-    y_pred_t = test_alg_2.predict(test_df_dum_scale)
-    test_df['hs_per_month'] = y_pred_t
-    # print (test_df)
+    pred_temp_hs_total_dum_scaled = scaler_hs_total.transform(pred_temp_hs_total_dum)
+    test_alg_total_hs.fit(X_4_train_hs_total_dummy_scaled, y_train_hs_total)
+    y_pred_total_hs = test_alg_total_hs.predict(pred_temp_hs_total_dum_scaled)
+    pred_temp_hs_total['pred_totaly_hs'] = y_pred_total_hs
     
-    # # with project, with each month
-    # # =============================================================
-    # test_df_dum_m_scale = scaler_m.transform(test_df_dum_m)
+    test_alg_month_qty.fit(X_4_train_hs_total_dummy_scaled, y_train_month_qty)
+    y_pred_month_qty = test_alg_month_qty.predict(pred_temp_hs_total_dum)
+    pred_temp_hs_total['pred_month_qty'] = y_pred_month_qty
+    
+    # with project, with each month
+    # =============================================================
+    pred_temp_hs_each_month_dum_scaled = scaler_hs_each_month.transform(pred_temp_hs_each_month_dum)
 
-    # test_alg_m.fit(Xm_scale, ym)
-    # y_pred_m = test_alg_m.predict(test_df_dum_m_scale)
-    # test_df_m['test_hs_m_pred'] = y_pred_m
+    test_alg_month_hs.fit(X_4_train_hs_each_month_dummy_scaled, y_train_hs_each_month)
+    y_pred_month_hs = test_alg_month_hs.predict(pred_temp_hs_each_month_dum_scaled)
+    pred_temp_hs_each_month['pred_month_hs'] = y_pred_month_hs
+    
+    
+    # ==================== check with Test Data ====================
+    combined_test_n_predict_total_hs, mse_total_hs = combine_test_data_w_dummy_prediction_total_hs(test_no_time, pred_temp_hs_total)
+
+    # combined_test_n_predict_each_month, mse_each_month = 
+    combine_test_data_w_dummy_prediction_each_month(test_no_time, pred_temp_hs_each_month)
+    
     
     # # # ==================== check learning curve ====================
     # # plot_learning_curves(test_alg, X, y)
