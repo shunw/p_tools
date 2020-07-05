@@ -132,6 +132,7 @@ stopwords/*
 
 # specific file
 df_data.pkl
+project_n_media_cleared.pkl
 
 *.png
 *.xlsx
@@ -143,3 +144,5 @@ df_data.pkl
 *.mov
 *.jpg
 
+
+*.mdb

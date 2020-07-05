@@ -313,9 +313,97 @@ class Work_load_Data():
         need_col = ['p_name', 'phase', 'test_hs', 'month_incr', 'c_type', 'p_type', 't_type']
         return df_proj_each_month[need_col], df_proj_each_month[['p_name', 'phase', 'test_hs', 'month_incr', 'date']]
 
+class Project_media_data_get():
+    '''
+    this is to prepare the project and its media data
+    '''
+    def __init__(self): 
+        self.df = joblib.load('project_n_media_cleared.pkl')
+        
+    def _clear_phase(self, row): 
+        '''
+        help function to find the correction phase
+        input: dataframe row
+        output: correct phase name
+        '''
+        try: 
+            return re.findall('MT|MP|DE', row['Device'])[0]
+        except: 
+            return None
+    def clear_media(self): 
+        '''
+        get a clear media information. 
+        process: 
+            [checked] 1. get the media data
+            [checked] 2. combine the country info
+            [checked] 3. combine the type info
+            [checked] 4. combine the weight info
+            [checked] 5. combine the size info
+            [checked] 6. check diff between the size info and weight info get from other table
+            7. deal with the nan data and create a pkl file
+        '''
+        root_path = './std_access_2_excel'
+        
+        self.std_media = pd.read_excel(os.path.join(root_path, 'TBLSTDMEDIA_LKUP.xlsx'))
+        
+        # combine the country 
+        country_lkup = pd.read_excel(os.path.join(root_path, 'TBLMEDIACOUNTRY_LKUP.xlsx'))
+        # print (self.std_media.shape)
+        # print (self.std_media.loc[pd.isna(self.std_media['Country ID']), ].shape)
+        self.std_media = pd.merge(self.std_media, country_lkup, how = 'left', left_on = 'Country ID', right_on = 'Country ID')
+        # print (self.std_media.shape)
 
+        # combine the type
+        type_lkup = pd.read_excel(os.path.join(root_path, 'TBLMEDIATYPE_LKUP.xlsx'))
+        
+        self.std_media = pd.merge(self.std_media, type_lkup, how = 'left', left_on = 'Type ID', right_on = 'Type ID')
+        
+        
+        # combine the weight info
+        weight_lkup = pd.read_excel(os.path.join(root_path, 'TBLMEDIAWEIGHT_LKUP.xlsx'))
+        self.std_media = pd.merge(self.std_media, weight_lkup, how = 'left', left_on = 'Weight ID', right_on = 'Weight ID')
+        
+        # combine the size info
+        size_lkup = pd.read_excel(os.path.join(root_path, 'TBLSTDMEDIASIZE_LKUP.xlsx'))
+        self.std_media = pd.merge(self.std_media, size_lkup, how = 'left', left_on = 'Size ID', right_on = 'Size ID')
+        
+        # create a pkl dataset for it and deal with the nan data
+        # type: ['Label' nan 'OHT' 'Converted' 'Envelope' 'Card' 'Translucent' 'Coated', 'Paper']
+        std_media_col = ['Media', 'Active', 'Type', 'Country', 'Weight', 'Size', 'Metric Weight', 'Media Size', 'Media Group_x']
+        self.std_media = self.std_media[std_media_col]
+        print (self.std_media.loc[(pd.isna(self.std_media['Type'])) & (self.std_media['Active'] == 1) & (pd.isna(self.std_media['Metric Weight']) | pd.isna(self.std_media['Size']) ), ['Active', 'Media', 'Weight', 'Metric Weight', 'Size', 'Media Size', 'Media Group_x']].head())
+        
+
+    def deal_data(self): 
+        '''
+        process: 
+            get the phase info
+            link the media information
+        '''
+        self.df['phase'] = self.df.apply(self._clear_phase, axis = 1)
+        self.df = self.df.loc[~pd.isna(self.df['phase']), ]
+        
+        self.clear_media()
+        std_media_col = ['Media', 'Type', 'Country', 'Media Weight', 'Weight', 'Size', 'Metric Weight', 'Media Size', 'Media Group_x']
+
+
+        # self.std_media = self.std_media[std_media_col]
+        
+        # self.df = pd.merge(self.df, self.std_media, how = 'left', left_on = 'Media', right_on = 'Media')
+
+        # general_col = ['Device', 'Product', 'Media', 'unit_type', 'sht_qty', 'phase', 'Type', 'Country', 'Media Weight', 'Weight', 'Metric Weight', 'Size', 'Media Size', 'Media Group_x']
+        # self.df = self.df[general_col]
+
+        # # print (self.df.columns)
+        # print (len(self.df.loc[pd.isna(self.df['Media Group_x']), 'Media'].unique()))
+        # print (len(self.df.loc[~pd.isna(self.df['Media Group_x']), 'Media'].unique()))
+        # # print (len(self.df.loc[:, 'Media'].unique()))
+        # # print (self.std_media.head())
+        
 if __name__ == '__main__':
-    pass
+    a = Project_media_data_get()
+    a.clear_media()
+
     # # =========== CSV data Import =============
     # name_ls = list(range(2013, 2021))
     # name_ls = ['.'.join([str(n), 'csv']) for n in name_ls]
