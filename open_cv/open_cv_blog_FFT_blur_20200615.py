@@ -10,7 +10,7 @@ def mac_show_cv2():
     cv2.destroyAllWindows()
     cv2.waitKey(1)
 
-def FFT_blur(img, thresh = 10, vis = False, test = False): 
+def FFT_blur(img, thresh = 27, vis = False, test = False): 
     '''
     thresh: blur or not judge level
     vis: 
@@ -33,11 +33,12 @@ def FFT_blur(img, thresh = 10, vis = False, test = False):
 
     cv2.putText(image, text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, .7, color, 2)
 
-    print ('[INFO] {}'.format(text))
+    if not test: 
+        print ('[INFO] {}'.format(text))
 
-    # show the output image
-    cv2.imshow('Output', image)
-    mac_show_cv2()
+        # show the output image
+        cv2.imshow('Output', image)
+        mac_show_cv2()
 
     # check to see  if are going to test our FFT blurriness detector using various size of a Gaussian Kernel
     if test: 
@@ -52,8 +53,20 @@ def FFT_blur(img, thresh = 10, vis = False, test = False):
                 image = cv2.GaussianBlur(image, (radius, radius), 0)
 
                 # apply our blur detctor using the FFT
-                (mean, blurry) = detect_blur_fft(image, size = 60, thresh = thresh )
+                (mean, blurry) = detect_blur_fft(image, size = 60, thresh = thresh)
+
+                # draw on the image, indicating whet2her or not it is blurry
+                image = np.dstack([image] * 3)
+                color = (0, 0, 255) if blurry else (0, 255, 0)
+                text = 'Blurry ({:.4f})' if blurry else 'Not Blurry ({:.4f})'
+                text = text.format(mean)
+                cv2.putText(image, text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, .7, color, 2)
+                print ('[INFO] Kernel: {}, Result: {}'.format(radius, text))
+            
+            # show the image
+            cv2.imshow('Test Image', image)
+            mac_show_cv2()
 
 if __name__ == '__main__':
     image = 'check_scan_img.JPG'
-    FFT_blur(image)
+    FFT_blur(image, test = True)

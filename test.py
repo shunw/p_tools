@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import gzip
 import pickle
 
-def line_format(label):
-    """
-    Convert time label to the format of pandas line plot
-    """
-    month = label.month_name()[:3]
-    if month == 'Jan':
-        month += f'\n{label.year}'
-    return month
+# def line_format(label):
+#     """
+#     Convert time label to the format of pandas line plot
+#     """
+#     month = label.month_name()[:3]
+#     if month == 'Jan':
+#         month += f'\n{label.year}'
+#     return month
 
 if __name__ == '__main__': 
     # df = pd.read_csv('covid_19.csv')
@@ -29,7 +29,8 @@ if __name__ == '__main__':
     # plt.show()
     
 
-    f = open('train-labels-idx1-ubyte', encoding = 'utf-8')
-    for line in f: 
-        print (line)
-        break
+    # f = open('train-labels-idx1-ubyte', encoding = 'utf-8')
+    # for line in f: 
+    #     print (line)
+    #     break
+
