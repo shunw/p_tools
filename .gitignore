@@ -147,3 +147,5 @@ project_n_media_cleared.pkl
 
 *.mdb
 *.pb
+
+*.caffemodel
